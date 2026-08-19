@@ -6,7 +6,7 @@ SQUID and EEG], covering the four subjects with OPM data.
 Each subject had an array of 15 sensors concentrated over the superior and posterior scalp. Each of these sensors produces 2 different channels, 1 per axis. In this dataset, the auditory data M100 is not detectable in global field power across all of the 30 channels each subject has.  After restricting the data to be only the two sensors closest to the superior temporal gyrus, which contains the auditory cortex, it exceeds a permutation-based null built from the same recording in two of three held-out subjects with peaks at 96 and 109 ms. Averaging these sensors with the other 28 does not seem to let any notable response to auditory stimulus be seen. All-channel's probability value was 0.11-0.43, however, with just the two better positioned sensors it was 0.0010-0.0350, showing the difference in detectability. Furthermore, repeating this test on the somatosensory data, specified to the more somatosensory-positioned sensors reports results in the same direction, showing much lower p values with the better positioned sensors. The somatosensory data also reported two subjects clearing the null even with all channels averaged, unlike auditory which only cleared 2/3 times with the two auditory-specific sensors.
 
 An earlier version of this repository reported a result that was wrong. See
-[what I got wrong](what-i-got-wrong).
+[what I got wrong](#what-i-got-wrong).
 
 ## Dataset
 The dataset used contains 15 different OPM-MEG sensors, concentrated specifically around the posterior and superior scalp. The exact positioning of these sensors is: 
@@ -40,7 +40,7 @@ Each surrogate null generated uses the exact same continous recording. They each
 
 The value p is the fraction of the surrogate maxima at or above the observed real data maxima. One is added to the numerator and denomintor. This is done to count our observed data as another possiblity, preventing p from ever being exactly 0. The smallest p possible to report is 1/2001, or ~0.05%. 
 
-The observed value and the surrogate values are both the maximum GFP inside a given window. Because of this, in the code we compare the observed maximum against a distribution of the surrogate maxima, as explained in [what I got wrong](what-i-got-wrong).
+The observed value and the surrogate values are both the maximum GFP inside a given window. Because of this, in the code we compare the observed maximum against a distribution of the surrogate maxima, as explained in [what I got wrong](#what-i-got-wrong).
 
 In the real dataset, the real recordings have triggers arrive roughly ever two seconds. However, in the surrogates we create, they land at uniformly random times. This means the surrogates do successfully reproduce the noise of the recordings, but it does not reprodcuce the periodic timing of the stimuli. A stricter version of this system would shift the entire trigger train by one random offset, preserving the intervals between triggers.
 
@@ -55,5 +55,12 @@ Peak and latency columns are from the selected pair of channels, not all 30.
 
  Even though 093's p-value was very low, it is excluded because its somatosensory control failed (p = 0.103), and that control was set in advance as a precondition for counting a subject's auditory result. Somatosensory control is the check that a subject's recording can detect a response known to be large, as somatosensory response is known to be a large signal in prior literature. If it were to be included, auditory would be three for three. The gated figure was reported because the rule was fixed before the data was opened. 
 
+# What I got wrong
+In the original version of this repository, there were 2 key mistakes present. 
 
+First, the code was initially written to account for a 20 ms lag in the data collection, however, after reading the dataset's manual the true lag was 60 ms. This caused every epoch to be 40 ms early. The 20 ms assumption came from that being the value that would have been used in SQUID and EEG, as the dataset's manual was misunderstood.
+
+The second mistake was an incorrect window analysis of the peaks in the data. Originally, the code would find the peak by searching through 80-130 ms and finding the highest point, before then seeing how far above the baseline mean that maximum was. In essence, if we just searched for the largest point, it would inherently be greater than our comparison, the mean, whether or not a response actually existed. To fix this, the code was changed to be comparing peaks against the maxima produced when the same recording is re-analysed with triggers at random times, rather than just against the mean.
+
+Finally, after fixing both of these errors, the data showed auditory response across all 30 channels does not clear the null in any subject. 
 
