@@ -1,9 +1,9 @@
 # opm-evoked-analysis
 
 Analysis of the OPM-MEG recordings in [dataset, ATR/NICT - simultaneous OPM,
-SQUID and EEG], covering the four subjects with OPM data.
+SQUID and EEG], covering the four subjects with OPM data. 
 
-Each subject had an array of 15 sensors concentrated over the superior and posterior scalp. Each of these sensors produces 2 different channels, 1 per axis. In this dataset, the auditory data M100 is not detectable in global field power across all of the 30 channels each subject has.  After restricting the data to be only the two sensors closest to the superior temporal gyrus, which contains the auditory cortex, it exceeds a permutation-based null built from the same recording in two of three held-out subjects with peaks at 96 and 109 ms. Averaging these sensors with the other 28 does not seem to let any notable response to auditory stimulus be seen. All-channel's probability value was 0.11-0.43, however, with just the two better positioned sensors it was 0.0010-0.0350, showing the difference in detectability. Furthermore, repeating this test on the somatosensory data, specified to the more somatosensory-positioned sensors reports results in the same direction, showing much lower p values with the better positioned sensors. The somatosensory data also reported two subjects clearing the null even with all channels averaged, unlike auditory which only cleared 2/3 times with the two auditory-specific sensors.
+Each subject had an array of 15 sensors concentrated over the superior and posterior scalp. Each of these sensors produces 2 different channels, 1 per axis. In this dataset, the auditory data M100 is not detectable in global field power across all of the 30 channels each subject has.  After restricting the data to be only the two sensors closest to the superior temporal gyrus, which contains the auditory cortex, it exceeds a permutation-based null built from the same recording in two of three held-out subjects with peaks at 96 and 109 ms. Averaging these sensors with the other 28 does not seem to let any notable response to auditory stimulus be seen. All-channel's probability value was 0.11-0.43, however, with just the two better positioned sensors it was 0.0010-0.0350, showing the difference in detectability. Furthermore, repeating this test on the somatosensory data, specified to the more somatosensory-positioned sensors reports results in the same direction, showing much lower p values with the better positioned sensors. The somatosensory data also reported two subjects clearing the null even with all channels averaged, unlike auditory which only cleared 2/3 times with the two auditory-specific sensors. This technique of channel selection is not a novel method. The main contributions of this analysis are the design and the quantification, not the technique.
 
 An earlier version of this repository reported a result that was wrong. See
 [what I got wrong](#what-i-got-wrong).
@@ -44,6 +44,12 @@ The observed value and the surrogate values are both the maximum GFP inside a gi
 
 In the real dataset, the real recordings have triggers arrive roughly ever two seconds. However, in the surrogates we create, they land at uniformly random times. This means the surrogates do successfully reproduce the noise of the recordings, but it does not reprodcuce the periodic timing of the stimuli. A stricter version of this system would shift the entire trigger train by one random offset, preserving the intervals between triggers.
 
+### The Frozen Selector
+To find the optimally positioned sensors for each test, it was first acknowledged that it would be one sensor per hemisphere, two total. The sensors nearest to the superior temporal gyrus, with the target position being ($\pm 60$, -20, +5) mm, in Euclidean distance, from the superior temporal gyrus. This gives us two sensors and four channels to work with. In choosing these sensors, the only data considered was the positioning of them, not the measurements to prevent artifacts in data causing bias. Furthermore, this was done completely before any computation was performed.
+
+### The Design
+The design of the analysis is relatively straightforward. 002's data was exploratory and thus excluded from the result. This was done to better understand the dataset and the values it returns. Furthermore, since it was repeatedly examined when the algorithm was developed, it could potentially be overfit if it were included in the actual data and return overconfident results. 005, 006, 093 were all anaylsed once after the selector was fixed. In this analysis, first, the somatosensory gate was defined as a precondition. Then, in a frame check, the results showed that a response-weighted mean x came out negative in all four subjects (-24, -35, -31, -28 mm). This confirmed the coordinate convention in the actual setup so it could be used to determine sensor positions.
+
 ## Results
 Peak and latency columns are from the selected pair of channels, not all 30.
 | Subject | All 30 channels | Two sensors nearest auditory cortex | Peak | Latency |
@@ -55,7 +61,18 @@ Peak and latency columns are from the selected pair of channels, not all 30.
 
  Even though 093's p-value was very low, it is excluded because its somatosensory control failed (p = 0.103), and that control was set in advance as a precondition for counting a subject's auditory result. Somatosensory control is the check that a subject's recording can detect a response known to be large, as somatosensory response is known to be a large signal in prior literature. If it were to be included, auditory would be three for three. The gated figure was reported because the rule was fixed before the data was opened. 
 
-# What I got wrong
+## Limitations
+### Preprocessing
+The preprocessing created by the authors of the dataset is not applied here, as explained earlier. This means that it is unknown if the whole-array null survives that HFC, detrending, bad-channel exclusion and EOG regression in that preprocessing. This means that of the response shows up in all-channel GFP once those are applied, there is not much relevancy in the coverage interpretation, the fact that the all-channel array cannot see the auditory cortex.
+### Low sample size
+In the actual analysis, we only have a sample size of 3. More samples would increase the reliability of the results and the usefulness. 
+### One array geometry
+None of the analysis performed here shows how this data scales with sensor count or sensor placement.
+### Shielded, head-fixed recordings
+The subjects in the dataset existed in magnetically well-shielded environments, and with a fixed head. This means there would be fewer motion or background magnetic artifacts present than in other scenarios. This means the analysis cannot be assumed to be as robust in other environments.
+### Confirmatory design is spent
+By designing the analysis around the first subject, and testing it on the ones after, we have set it up so any more changes would be shaped by having seen those subjects. This would make them exploratory, and no longer useful due to them not being able to confirm success. 
+## What I got wrong
 In the original version of this repository, there were 2 key mistakes present. 
 
 First, the code was initially written to account for a 20 ms lag in the data collection, however, after reading the dataset's manual the true lag was 60 ms. This caused every epoch to be 40 ms early. The 20 ms assumption came from that being the value that would have been used in SQUID and EEG, as the dataset's manual was misunderstood.
@@ -63,4 +80,19 @@ First, the code was initially written to account for a 20 ms lag in the data col
 The second mistake was an incorrect window analysis of the peaks in the data. Originally, the code would find the peak by searching through 80-130 ms and finding the highest point, before then seeing how far above the baseline mean that maximum was. In essence, if we just searched for the largest point, it would inherently be greater than our comparison, the mean, whether or not a response actually existed. To fix this, the code was changed to be comparing peaks against the maxima produced when the same recording is re-analysed with triggers at random times, rather than just against the mean.
 
 Finally, after fixing both of these errors, the data showed auditory response across all 30 channels does not clear the null in any subject. 
+## Scripts
+After a script has generated final data, it may not be modified as any changes would be exploratory rather than confirmatory.
+| Script | Claim | Requirements |
+|---|---|---|
+|channel_diagnostics.py|||
+|evoked_response.py||||
+|geometry_map.py||||
+|geometry_selection.py||||
+|multi_subject.py||||
+|noise20hz.py||||
+|noisefinder.py||||
+|preprocessing_somatosensory.py||||
+|rewritten_preprocessing.py||||
+|somatosensor_result.py||||
+|somatosensory_gate.py||||
 
