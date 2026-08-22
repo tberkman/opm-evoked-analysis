@@ -81,18 +81,20 @@ The second mistake was an incorrect window analysis of the peaks in the data. Or
 
 Finally, after fixing both of these errors, the data showed auditory response across all 30 channels does not clear the null in any subject. 
 ## Scripts
-After a script has generated final data, it may not be modified as any changes would be exploratory rather than confirmatory.
-| Script | Claim | Requirements |
-|---|---|---|
-|channel_diagnostics.py|||
-|evoked_response.py||||
-|geometry_map.py||||
-|geometry_selection.py||||
-|multi_subject.py||||
-|noise20hz.py||||
-|noisefinder.py||||
-|preprocessing_somatosensory.py||||
-|rewritten_preprocessing.py||||
-|somatosensor_result.py||||
-|somatosensory_gate.py||||
 
+Requires `numpy`, `scipy`, `matplotlib`. Set the data path at the top of each
+script. Each script is left as it was when the numbers reported here were produced. 
+
+| Script | Produces | Reported in |
+|---|---|---|
+| `evoked_response.py` | Auditory analysis, subject 002, corrected 60 ms lag and surrogate null | What I got wrong |
+| `somatosensor_result.py` | Somatosensory positive control, subject 002 | Methods |
+| `geometry_map.py` | Sensor positions, orientations, per-channel response maps, frame check | Dataset, Design |
+| `geometry_selection.py` | Geometry-selected channel test and the k sweep | Methods |
+| `multi_subject.py` | Frozen-selector confirmatory run across all four subjects | Results |
+| `somatosensory_gate.py` | Both versions of the somatosensory gate | Results |
+| `rewritten_preprocessing.py` | Per-step preprocessing comparison and uniform-basis projection | Preprocessing findings |
+| `preprocessing_somatosensory.py` | Uniform-basis projection on the somatosensory task | Preprocessing findings |
+| `noise20hz.py` | Artifact from before the 60 ms fix, was used to see power spectrum at 20 hz | What I got wrong |
+| `channel_diagnostics.py` | Artifact from before the 60 ms fix, was used to find strongest channels in the data | What I got wrong |
+| `noisefinder.py` | Artifact from before the 60 ms fix, was used to see full power spectrum | What I got wrong | 
